@@ -1,1 +1,48 @@
-.env*
+# ──────────────────────────────────────────────────────────────
+# KaspiTracker — .gitignore
+# ──────────────────────────────────────────────────────────────
+
+# ── Maven build output ────────────────────────────────────────
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ── IntelliJ IDEA ─────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# ── VS Code ───────────────────────────────────────────────────
+.vscode/
+
+# ── Eclipse ───────────────────────────────────────────────────
+.classpath
+.project
+.settings/
+.factorypath
+
+# ── Environment / Secrets ─────────────────────────────────────
+# IMPORTANT: .env contains DB credentials — never commit!
+.env
+*.env
+!.env.example
+
+# ── OS generated ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Spring Boot packaged jars ─────────────────────────────────
+*.jar
+!**/src/test/**/fixtures/**/*.jar
+
+# ── Docker volumes (if using local bind mounts) ───────────────
+postgres_data/
+sample-data/

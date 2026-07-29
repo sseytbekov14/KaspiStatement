@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KaspiTracker - Upload Statement</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>KaspiTracker</h1>
+            <p class="item-subtitle">Expense Analytics</p>
+        </header>
+
+        <nav style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+            <a th:href="@{/}">Upload</a>
+            <a th:href="@{/statements}">My Statements</a>
+            <form th:action="@{/logout}" method="post" style="display: inline; margin: 0;">
+                <button type="submit" style="background: none; border: none; color: var(--primary-color); font-weight: bold; cursor: pointer; font-size: 16px;">Logout</button>
+            </form>
+        </nav>
+
+        <div class="card">
+            <h2 class="mb-2">Upload Kaspi Statement</h2>
+            <p class="item-subtitle mb-2">Select your Kaspi Bank PDF statement (English version) to parse and categorize your transactions.</p>
+            
+            <div id="alertBox" class="alert"></div>
+
+            <form id="uploadForm">
+                <div class="form-group">
+                    <input type="file" id="pdfFile" name="file" accept="application/pdf" required>
+                </div>
+                <button type="submit" id="submitBtn" class="btn">Upload & Parse</button>
+            </form>
+            
+            <div id="loader" class="loader mt-4"></div>
+        </div>
+
+        <div id="resultCard" class="card" style="display: none;">
+            <h2 class="mb-2">Upload Successful!</h2>
+            <p>Statement saved. <span id="txCount" class="amount"></span> transactions processed.</p>
+            <a id="detailsLink" href="#" class="btn mt-4">View Analytics</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('pdfFile');
+            if (fileInput.files.length === 0) return;
+
+            const btn = document.getElementById('submitBtn');
+            const loader = document.getElementById('loader');
+            const alertBox = document.getElementById('alertBox');
+            const resultCard = document.getElementById('resultCard');
+
+            btn.disabled = true;
+            loader.style.display = 'block';
+            alertBox.style.display = 'none';
+            resultCard.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/api/statements/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (data.success) {
+                        alertBox.className = 'alert success';
+                        alertBox.textContent = data.message;
+                        alertBox.style.display = 'block';
+                        
+                        document.getElementById('txCount').textContent = data.savedTransactionsCount;
+                        document.getElementById('detailsLink').href = '/statements/' + data.statementId;
+                        resultCard.style.display = 'block';
+                    } else if (data.isDuplicate) {
+                        alertBox.className = 'alert error';
+                        alertBox.textContent = data.message;
+                        alertBox.style.display = 'block';
+                        
+                        document.getElementById('detailsLink').href = '/statements/' + data.statementId;
+                        document.getElementById('detailsLink').textContent = 'View Existing Statement';
+                        resultCard.style.display = 'block';
+                    }
+                } else {
+                    alertBox.className = 'alert error';
+                    alertBox.textContent = data.message || 'An error occurred during upload.';
+                    alertBox.style.display = 'block';
+                }
+            } catch (err) {
+                alertBox.className = 'alert error';
+                alertBox.textContent = 'Network error. Please try again.';
+                alertBox.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

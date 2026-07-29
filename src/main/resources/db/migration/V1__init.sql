@@ -1,0 +1,7 @@
+-- V1__init.sql
+-- Flyway baseline migration for KaspiTracker.
+--
+-- This file intentionally left empty for the skeleton milestone.
+-- Real table definitions (Statement, Transaction, Category, MerchantCategoryMapping)
+-- will be added in the next migration file (V2__create_core_tables.sql)
+-- as part of Milestone 3 (Data model) per Technical Specification.md §3.

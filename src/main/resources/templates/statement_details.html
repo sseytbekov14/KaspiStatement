@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KaspiTracker - Statement Analytics</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>KaspiTracker</h1>
+            <p class="item-subtitle">Statement Analytics</p>
+        </header>
+
+        <nav style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+            <a th:href="@{/}">Upload</a>
+            <a th:href="@{/statements}">My Statements</a>
+            <form th:action="@{/logout}" method="post" style="display: inline; margin: 0;">
+                <button type="submit" style="background: none; border: none; color: var(--primary-color); font-weight: bold; cursor: pointer; font-size: 16px;">Logout</button>
+            </form>
+        </nav>
+
+        <div class="card">
+            <h2 class="mb-2">Summary</h2>
+            <div id="loader" class="loader mt-4" style="display: block;"></div>
+            
+            <div id="summaryContent" style="display: none;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; text-align: center;">
+                    <div style="flex: 1; padding: 15px; background: #ffebee; border-radius: 8px; margin-right: 10px;">
+                        <div class="item-subtitle">Total Expenses (Debit)</div>
+                        <div id="totalDebit" class="amount" style="font-size: 20px; color: #c62828;"></div>
+                    </div>
+                    <div style="flex: 1; padding: 15px; background: #e8f5e9; border-radius: 8px; margin-left: 10px;">
+                        <div class="item-subtitle">Total Income (Credit)</div>
+                        <div id="totalCredit" class="amount credit" style="font-size: 20px;"></div>
+                    </div>
+                </div>
+
+                <h3 class="mb-2">Expenses by Category</h3>
+                <ul id="categoryList" class="list-group">
+                    <!-- Filled via JS -->
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 class="mb-2">Transactions</h2>
+            <ul id="transactionList" class="list-group">
+                <!-- Filled via JS -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Pass ID from model -->
+    <script th:inline="javascript">
+        const stmtId = /*[[${statementId}]]*/ 0;
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Fetch Analytics
+                const analyticsRes = await fetch(`/api/analytics/summary?statementId=${stmtId}`);
+                const analytics = await analyticsRes.json();
+                
+                document.getElementById('totalDebit').textContent = analytics.totalDebit.toLocaleString('ru-RU') + ' ₸';
+                document.getElementById('totalCredit').textContent = '+' + analytics.totalCredit.toLocaleString('ru-RU') + ' ₸';
+                
+                const catList = document.getElementById('categoryList');
+                analytics.categories.forEach(cat => {
+                    const li = document.createElement('li');
+                    li.className = 'list-item';
+                    
+                    const left = document.createElement('div');
+                    left.className = 'item-title';
+                    left.textContent = cat.categoryName;
+                    
+                    const right = document.createElement('div');
+                    right.className = 'amount';
+                    right.textContent = cat.totalAmount.toLocaleString('ru-RU') + ' ₸';
+                    
+                    li.appendChild(left);
+                    li.appendChild(right);
+                    catList.appendChild(li);
+                });
+                
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('summaryContent').style.display = 'block';
+
+                // Fetch Transactions
+                const txRes = await fetch(`/api/transactions?statementId=${stmtId}`);
+                const txs = await txRes.json();
+                
+                const txList = document.getElementById('transactionList');
+                txs.forEach(tx => {
+                    const li = document.createElement('li');
+                    li.className = 'list-item';
+                    
+                    const left = document.createElement('div');
+                    const title = document.createElement('div');
+                    title.className = 'item-title';
+                    title.textContent = tx.merchant;
+                    
+                    const sub = document.createElement('div');
+                    sub.className = 'item-subtitle';
+                    sub.textContent = `${tx.date} • ${tx.categoryName || 'Uncategorized'} • ${tx.operationType}`;
+                    
+                    left.appendChild(title);
+                    left.appendChild(sub);
+                    
+                    const right = document.createElement('div');
+                    right.className = `amount ${tx.sign === 'CREDIT' ? 'credit' : 'debit'}`;
+                    right.textContent = (tx.sign === 'CREDIT' ? '+' : '-') + tx.amount.toLocaleString('ru-RU') + ' ₸';
+                    
+                    li.appendChild(left);
+                    li.appendChild(right);
+                    txList.appendChild(li);
+                });
+
+            } catch (err) {
+                console.error('Failed to load data', err);
+            }
+        });
+    </script>
+</body>
+</html>

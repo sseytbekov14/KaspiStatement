@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KaspiTracker - My Statements</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>KaspiTracker</h1>
+            <p class="item-subtitle">My Statements</p>
+        </header>
+
+        <nav style="display: flex; justify-content: center; align-items: center; gap: 10px;">
+            <a th:href="@{/}">Upload</a>
+            <a th:href="@{/statements}">My Statements</a>
+            <form th:action="@{/logout}" method="post" style="display: inline; margin: 0;">
+                <button type="submit" style="background: none; border: none; color: var(--primary-color); font-weight: bold; cursor: pointer; font-size: 16px;">Logout</button>
+            </form>
+        </nav>
+
+        <div class="card">
+            <h2 class="mb-2">Uploaded Statements</h2>
+            <div id="loader" class="loader mt-4" style="display: block;"></div>
+            <ul id="statementList" class="list-group" style="display: none;">
+                <!-- Filled via JS -->
+            </ul>
+            <p id="emptyMsg" class="item-subtitle text-center" style="display: none; margin-top: 20px;">No statements found.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/api/statements');
+                const statements = await response.json();
+                
+                document.getElementById('loader').style.display = 'none';
+                
+                if (statements.length === 0) {
+                    document.getElementById('emptyMsg').style.display = 'block';
+                    return;
+                }
+
+                const list = document.getElementById('statementList');
+                statements.forEach(stmt => {
+                    const li = document.createElement('li');
+                    li.className = 'list-item';
+                    
+                    const left = document.createElement('div');
+                    const title = document.createElement('div');
+                    title.className = 'item-title';
+                    title.textContent = `${stmt.periodStart} to ${stmt.periodEnd}`;
+                    
+                    const sub = document.createElement('div');
+                    sub.className = 'item-subtitle';
+                    sub.textContent = `Uploaded: ${new Date(stmt.uploadDate).toLocaleDateString()} • ${stmt.transactionCount} transactions`;
+                    
+                    left.appendChild(title);
+                    left.appendChild(sub);
+                    
+                    const right = document.createElement('div');
+                    const link = document.createElement('a');
+                    link.href = `/statements/${stmt.id}`;
+                    link.className = 'btn';
+                    link.style.padding = '8px 12px';
+                    link.style.fontSize = '14px';
+                    link.textContent = 'View';
+                    right.appendChild(link);
+                    
+                    li.appendChild(left);
+                    li.appendChild(right);
+                    list.appendChild(li);
+                });
+                
+                list.style.display = 'block';
+            } catch (err) {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('emptyMsg').textContent = 'Error loading statements.';
+                document.getElementById('emptyMsg').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

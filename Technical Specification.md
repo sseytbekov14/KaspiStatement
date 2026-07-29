@@ -1,4 +1,4 @@
-# Техническое задание: Kaspi Statement Parser
+# Техническое задание: KaspiTracker (Kaspi Statement Parser)
 
 ## 1. Цель проекта
 
@@ -48,6 +48,8 @@ Developer / Java Middle SWE — production-подход, а не учебный 
 - [ ] Сравнение расходов месяц к месяцу, тренды
 - [ ] Веб-дашборд с графиками (вместо чистого JSON-ответа)
 - [ ] Массовая загрузка нескольких выписок сразу
+- [ ] Поддержка выписок на русском и казахском языках (определение языка
+      PDF + отдельные маппинги заголовков/паттернов под каждый язык)
 
 ### Явно вне scope (не делаем)
 - Kafka / RabbitMQ / Redis — нет архитектурного сценария, который их оправдывает
@@ -60,8 +62,11 @@ Developer / Java Middle SWE — production-подход, а не учебный 
 ## 3. Модель данных (укрупнённо)
 
 - **Statement** — загруженная выписка (файл-источник, период, дата загрузки)
-- **Transaction** — одна операция (дата, мерчант как есть из PDF, сумма, тип,
-  ссылка на Statement, ссылка на Category)
+- **Transaction** — одна операция: дата, знак (+/-), сумма, **operationType**
+  (встроенный тип операции из PDF: Purchases / Replenishment / Withdrawals /
+  Transfers / Others / Transfer to your account), мерчант/детали как есть из
+  PDF, ссылка на Statement, ссылка на Category (категория по мерчанту —
+  отдельное поле от operationType)
 - **Category** — категория трат (Продукты, Транспорт, Связь, Развлечения и т.д.)
 - **MerchantCategoryMapping** — справочник соответствий "название мерчанта →
   категория", пополняется вручную и через AI-fallback
@@ -77,6 +82,11 @@ Developer / Java Middle SWE — production-подход, а не учебный 
   видна отдельным списком, не блокирует обработку остальной выписки
 - Категоризация — сначала fuzzy matching (Apache Commons Text), LLM — только
   как fallback для несопоставленных мерчантов
+- **Язык выписки:** Kaspi позволяет скачать выписку на казахском, русском и
+  английском. Для MVP парсер делается под **английскую версию** PDF (проще
+  с кодировкой, предсказуемее regex-паттерны). Поддержка RU/KZ — future
+  improvement: понадобится определение языка PDF + отдельные маппинги
+  заголовков/паттернов под каждый язык
 
 ---
 
@@ -122,13 +132,40 @@ Developer / Java Middle SWE — production-подход, а не учебный 
 
 ---
 
-## 7. Открытые вопросы / нужно исследовать
+## 7. Формат PDF-выписки (исследовано на реальном файле, Milestone 2)
 
-- Насколько стабилен формат PDF-выписки Kaspi между месяцами — требуется
-  открыть реальный файл через PDFBox и посмотреть на сырой текстовый вывод
-  до проектирования финального regex-парсера
-- Многострочные транзакции (если описание мерчанта переносится) — уточнить
-  на реальных данных
+Формат строки транзакции (английская версия):
+```
+DD.MM.YY [+|-] AMOUNT,CC ₸   OPERATION_TYPE      MERCHANT/DETAILS
+```
+
+- **Дата:** `DD.MM.YY`, разделитель `.`
+- **Знак:** `+` (приход) или `-` (расход)
+- **Сумма:** пробел как разделитель тысяч, запятая как десятичный разделитель
+  (пример: `400 000,00`), валюта `₸`
+- **OperationType:** фиксированный словарь — `Purchases`, `Replenishment`,
+  `Withdrawals`, `Transfers`, `Others`, `Transfer to your account`
+- **Маркер начала таблицы:** строка `Date Amount Transaction Details`
+- **Маркер конца таблицы:** строка `The section "Transaction summary"...`
+
+**Аномалии, которые парсер должен обрабатывать:**
+1. `Transfer to your account` переносится на две строки — вторая строка
+   содержит только слово `account` без даты, нужно склеивать с предыдущей
+2. На каждой странице между транзакциями встречаются page header/footer
+   строки (`JSC "Kaspi Bank", BIC CASPKZKA...`, `Appendix to Statement No...`)
+   — нужно пропускать при парсинге, они не являются транзакциями
+
+Рабочий regex (отправная точка для Milestone 3, требует тестового покрытия
+на edge cases выше):
+```
+^(\d{2}\.\d{2}\.\d{2})\s+([+-])\s+([\d\s]+,\d{2})\s*₸?\s{2,}(.+?)\s{4,}(.+)$
+```
+
+---
+
+## 8. Open Issues
+
+- **Testcontainers integration tests temporarily disabled** — Docker Desktop 4.75 returns empty/malformed JSON (HTTP 400) on all connection strategies (npipe, TCP tcp://localhost:2375), tried Testcontainers 1.19.8 and 1.20.4. Possible cause: Docker Desktop 4.75 Enhanced Container Isolation blocking API access. To revisit: check Docker Desktop Settings → Resources → Enhanced Container Isolation, or wait for Testcontainers/docker-java compatibility update.
 
 ---
 
