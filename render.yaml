@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: kaspitracker
+    name: kaspi-statement
     env: docker
     plan: free
     healthCheckPath: /login
