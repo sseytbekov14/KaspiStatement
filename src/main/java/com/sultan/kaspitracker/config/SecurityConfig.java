@@ -28,8 +28,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 1. Disable CSRF for API endpoints
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
+            // 1. Configure CSRF with CookieCsrfTokenRepository for mobile Safari support
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/api/**")
+                .csrfTokenRepository(org.springframework.security.web.csrf.CookieCsrfTokenRepository.withHttpOnlyFalse())
+            )
             
             // 2. Authorize requests
             .authorizeHttpRequests(auth -> auth

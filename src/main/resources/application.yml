@@ -36,7 +36,10 @@ app:
 
 server:
   port: ${SERVER_PORT:8080}
-
+  servlet:
+    session:
+      cookie:
+        same-site: lax
 logging:
   level:
     com.sultan.kaspitracker: DEBUG
