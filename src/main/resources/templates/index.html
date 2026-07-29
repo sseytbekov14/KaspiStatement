@@ -52,6 +52,7 @@
                 </div>
                 
                 <div class="flex items-center gap-6">
+                    <a th:href="@{/}" class="text-white border-b-2 border-kaspi pb-1 font-medium">Dashboard</a>
                     <a th:href="@{/statements}" class="text-gray-300 hover:text-white transition font-medium">My Statements</a>
                     
                     <form th:action="@{/logout}" method="post" class="m-0">
@@ -80,7 +81,7 @@
                 <div class="absolute top-0 right-0 w-32 h-32 bg-kaspi/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
                 <h3 class="text-gray-400 text-sm font-semibold uppercase tracking-wider">Total Expenses</h3>
                 <p class="text-3xl font-bold text-white mt-2">
-                    <span th:text="${totalExpenses != null ? totalExpenses : '0.00'}">0.00</span> ₸
+                    <span th:text="${totalExpenses != null ? #numbers.formatDecimal(totalExpenses, 1, 'WHITESPACE', 2, 'POINT') : '0.00'}">0.00</span> ₸
                 </p>
             </div>
 
@@ -171,7 +172,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right font-semibold"
                                 th:classappend="${tx.sign.name() == 'CREDIT' ? 'text-emerald-400' : 'text-gray-200'}">
                                 <span th:text="${tx.sign.name() == 'CREDIT' ? '+' : '-'}">-</span>
-                                <span th:text="${tx.amount}">100.00</span> ₸
+                                <span th:text="${#numbers.formatDecimal(tx.amount, 1, 'WHITESPACE', 2, 'POINT')}">100.00</span> ₸
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(transactions)}">
