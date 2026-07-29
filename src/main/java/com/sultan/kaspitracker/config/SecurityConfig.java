@@ -12,8 +12,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -28,27 +26,23 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // Use a non-deferred handler so the CSRF token is eagerly resolved
-        // and always available as a request attribute for Thymeleaf forms.
-        // This fixes the 403 on mobile Safari where deferred tokens cause a mismatch.
-        CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
-        requestHandler.setCsrfRequestAttributeName("_csrf");
-
         http
-            // 1. CSRF: cookie-based repository + eager token loading
+            // 1. CSRF: session-based (default HttpSessionCsrfTokenRepository).
+            //    Thymeleaf reads the token from the session automatically via ${_csrf}.
+            //    Disable CSRF for API endpoints (they use Basic Auth) and for /login
+            //    to prevent 403 on mobile browsers that drop session cookies between
+            //    GET /login and POST /login.
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/**")
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .csrfTokenRequestHandler(requestHandler)
+                .ignoringRequestMatchers("/api/**", "/login")
             )
             
-            // 2. Authorize requests — explicitly permit /login and static resources
+            // 2. Authorize requests
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/login", "/css/**", "/js/**", "/webjars/**", "/favicon.ico", "/error").permitAll()
                 .anyRequest().authenticated()
             )
             
-            // 3. Form login with explicit redirect to dashboard
+            // 3. Form login → always redirect to dashboard after success
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
@@ -60,18 +54,17 @@ public class SecurityConfig {
             // 4. Session management
             .sessionManagement(session -> session
                 .sessionFixation().migrateSession()
-                .maximumSessions(1)
             )
             
-            // 5. Basic Auth for API / Swagger
+            // 5. Basic Auth for REST API / Swagger
             .httpBasic(Customizer.withDefaults())
             
-            // 6. Logout: clear session and cookies, redirect to login
+            // 6. Logout: invalidate session, redirect to login
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout")
                 .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID", "XSRF-TOKEN")
+                .deleteCookies("JSESSIONID")
                 .permitAll()
             );
 
