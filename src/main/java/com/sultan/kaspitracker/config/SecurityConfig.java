@@ -17,6 +17,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SecurityConfig.class);
 
     @Value("${app.security.username}")
     private String username;
@@ -50,18 +51,38 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
+        String finalPassword = password;
+        
+        if (finalPassword != null && !finalPassword.startsWith("{")) {
+            if (finalPassword.startsWith("$2a$") || finalPassword.startsWith("$2b$") || finalPassword.startsWith("$2y$")) {
+                finalPassword = "{bcrypt}" + finalPassword;
+            } else {
+                finalPassword = "{noop}" + finalPassword;
+                log.warn("Using {noop} password encoder. Please use a BCrypt hash in production.");
+            }
+        }
+
         UserDetails user = User.builder()
             .username(username)
-            // The password injected from application.yml should already be a BCrypt hash
-            .password(password) 
+            .password(finalPassword)
             .roles("USER")
             .build();
 
-        return new InMemoryUserDetailsManager(user);
+        return new InMemoryUserDetailsManager(user) {
+            @Override
+            public UserDetails loadUserByUsername(String inputUsername) throws org.springframework.security.core.userdetails.UsernameNotFoundException {
+                try {
+                    return super.loadUserByUsername(inputUsername);
+                } catch (org.springframework.security.core.userdetails.UsernameNotFoundException ex) {
+                    log.warn("Authentication failed: User '{}' not found", inputUsername);
+                    throw ex;
+                }
+            }
+        };
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return org.springframework.security.crypto.factory.PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 }
