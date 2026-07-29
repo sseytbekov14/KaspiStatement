@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: kaspitracker
+    env: docker
+    plan: free
+    healthCheckPath: /login
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: APP_USERNAME
+        sync: false
+      - key: APP_PASSWORD
+        sync: false
+      - key: SPRING_PROFILES_ACTIVE
+        sync: false
