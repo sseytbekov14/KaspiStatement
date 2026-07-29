@@ -14,20 +14,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.sultan.kaspitracker.repository.StatementRepository;
+
 @Controller
 public class WebController {
 
     private final TransactionRepository transactionRepository;
+    private final StatementRepository statementRepository;
 
-    public WebController(TransactionRepository transactionRepository) {
+    public WebController(TransactionRepository transactionRepository, StatementRepository statementRepository) {
         this.transactionRepository = transactionRepository;
+        this.statementRepository = statementRepository;
     }
 
     @GetMapping("/")
     public String index(Model model) {
         List<Transaction> allTransactions = transactionRepository.findAll();
         allTransactions.sort(Comparator.comparing(Transaction::getDate).reversed());
-        
+
         List<Transaction> debitTransactions = allTransactions.stream()
                 .filter(t -> t.getSign() == SignType.DEBIT)
                 .toList();
@@ -39,8 +43,7 @@ public class WebController {
         Map<String, BigDecimal> expensesByCategory = debitTransactions.stream()
                 .collect(Collectors.groupingBy(
                         t -> t.getCategory() != null ? t.getCategory().getName() : "Uncategorized",
-                        Collectors.reducing(BigDecimal.ZERO, Transaction::getAmount, BigDecimal::add)
-                ));
+                        Collectors.reducing(BigDecimal.ZERO, Transaction::getAmount, BigDecimal::add)));
 
         String topCategory = expensesByCategory.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
@@ -60,8 +63,14 @@ public class WebController {
         return "index";
     }
 
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
+
     @GetMapping("/statements")
-    public String statements() {
+    public String statements(Model model) {
+        model.addAttribute("statements", statementRepository.findAll());
         return "statements";
     }
 

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KaspiTracker - Login</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        kaspi: '#f14635',
+                        fintech: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                            accent: '#3b82f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-fintech-900 text-gray-200 font-sans antialiased min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-fintech-800 rounded-xl border border-gray-700 shadow-2xl w-full max-w-md overflow-hidden relative">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-kaspi/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+        
+        <div class="p-8">
+            <div class="flex flex-col items-center mb-8">
+                <div class="w-12 h-12 rounded-lg bg-kaspi flex items-center justify-center text-white font-bold text-3xl shadow-[0_0_15px_rgba(241,70,53,0.5)] mb-4">
+                    K
+                </div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">Kaspi<span class="text-kaspi">Tracker</span></h1>
+                <p class="text-gray-400 text-sm mt-1">Sign in to access your analytics</p>
+            </div>
+
+            <div th:if="${param.error}" class="mb-6 p-4 rounded-lg bg-red-900/50 border border-red-500/50 text-red-400 text-sm font-medium text-center">
+                Invalid username or password.
+            </div>
+
+            <div th:if="${param.logout}" class="mb-6 p-4 rounded-lg bg-emerald-900/50 border border-emerald-500/50 text-emerald-400 text-sm font-medium text-center">
+                You have been logged out.
+            </div>
+
+            <form th:action="@{/login}" method="post" class="space-y-6">
+                <!-- Explicit CSRF Token -->
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-300 mb-1">Username</label>
+                    <input type="text" id="username" name="username" required autofocus
+                           class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-kaspi focus:border-transparent transition-all">
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                    <input type="password" id="password" name="password" required
+                           class="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-kaspi focus:border-transparent transition-all">
+                </div>
+
+                <button type="submit" class="w-full bg-kaspi hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-colors flex justify-center items-center">
+                    Sign In
+                </button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

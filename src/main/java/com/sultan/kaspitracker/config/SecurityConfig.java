@@ -38,12 +38,23 @@ public class SecurityConfig {
             )
             
             // 3. Enable form login for Web UI
-            .formLogin(Customizer.withDefaults())
+            .formLogin(form -> form
+                .loginPage("/login")
+                .defaultSuccessUrl("/", true)
+                .failureUrl("/login?error=true")
+                .permitAll()
+            )
             
-            // 4. Enable Basic Auth for API / Swagger
+            // 4. Session management to prevent invalid CSRF token exceptions on expired sessions
+            .sessionManagement(session -> session
+                .sessionFixation().migrateSession()
+                .maximumSessions(1)
+            )
+            
+            // 5. Enable Basic Auth for API / Swagger
             .httpBasic(Customizer.withDefaults())
             
-            // 5. Enable default logout
+            // 6. Enable default logout
             .logout(Customizer.withDefaults());
 
         return http.build();
