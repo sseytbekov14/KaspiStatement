@@ -4,32 +4,81 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KaspiTracker - My Statements</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        kaspi: '#f14635',
+                        fintech: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                            accent: '#3b82f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>KaspiTracker</h1>
-            <p class="item-subtitle">My Statements</p>
-        </header>
+<body class="bg-fintech-900 text-gray-200 font-sans antialiased min-h-screen flex flex-col">
 
-        <nav style="display: flex; justify-content: center; align-items: center; gap: 10px;">
-            <a th:href="@{/}">Upload</a>
-            <a th:href="@{/statements}">My Statements</a>
-            <form th:action="@{/logout}" method="post" style="display: inline; margin: 0;">
-                <button type="submit" style="background: none; border: none; color: var(--primary-color); font-weight: bold; cursor: pointer; font-size: 16px;">Logout</button>
-            </form>
-        </nav>
-
-        <div class="card">
-            <h2 class="mb-2">Uploaded Statements</h2>
-            <div id="loader" class="loader mt-4" style="display: block;"></div>
-            <ul id="statementList" class="list-group" style="display: none;">
-                <!-- Filled via JS -->
-            </ul>
-            <p id="emptyMsg" class="item-subtitle text-center" style="display: none; margin-top: 20px;">No statements found.</p>
+    <!-- Top Navigation -->
+    <nav class="bg-fintech-800 shadow-lg border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded bg-kaspi flex items-center justify-center text-white font-bold text-xl shadow-[0_0_15px_rgba(241,70,53,0.5)]">
+                        K
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-white">Kaspi<span class="text-kaspi">Tracker</span></span>
+                </div>
+                
+                <div class="flex items-center gap-6">
+                    <a th:href="@{/}" class="text-gray-300 hover:text-white transition font-medium">Dashboard</a>
+                    <a th:href="@{/statements}" class="text-white border-b-2 border-kaspi pb-1 font-medium">My Statements</a>
+                    
+                    <form th:action="@{/logout}" method="post" class="m-0">
+                        <button type="submit" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition shadow-md border border-gray-600 hover:border-gray-500">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
-    </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        
+        <!-- Header -->
+        <div>
+            <h1 class="text-2xl font-bold text-white">My Statements</h1>
+            <p class="text-gray-400 mt-1">Review your previously uploaded Kaspi PDF statements.</p>
+        </div>
+
+        <div class="bg-fintech-800 rounded-xl border border-gray-700 shadow-lg p-6">
+            <div id="loader" class="flex justify-center items-center py-12">
+                <div class="w-8 h-8 border-4 border-fintech-700 border-t-kaspi rounded-full animate-spin"></div>
+            </div>
+            
+            <div id="emptyMsg" class="hidden text-center py-12 text-gray-400">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <p class="text-lg font-medium text-gray-300">No statements found</p>
+                <p class="text-sm mt-1">Upload a Kaspi statement from the dashboard to get started.</p>
+                <a th:href="@{/}" class="inline-block mt-4 text-kaspi hover:text-red-400 font-medium transition-colors">Go to Dashboard</a>
+            </div>
+
+            <div id="statementList" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Filled via JS -->
+            </div>
+        </div>
+    </main>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -37,49 +86,47 @@
                 const response = await fetch('/api/statements');
                 const statements = await response.json();
                 
-                document.getElementById('loader').style.display = 'none';
+                document.getElementById('loader').classList.add('hidden');
                 
-                if (statements.length === 0) {
-                    document.getElementById('emptyMsg').style.display = 'block';
+                if (!statements || statements.length === 0) {
+                    document.getElementById('emptyMsg').classList.remove('hidden');
                     return;
                 }
 
                 const list = document.getElementById('statementList');
                 statements.forEach(stmt => {
-                    const li = document.createElement('li');
-                    li.className = 'list-item';
+                    const card = document.createElement('div');
+                    card.className = 'bg-gray-800/50 rounded-lg p-5 border border-gray-700 hover:border-gray-500 transition-colors flex flex-col justify-between';
                     
-                    const left = document.createElement('div');
-                    const title = document.createElement('div');
-                    title.className = 'item-title';
-                    title.textContent = `${stmt.periodStart} to ${stmt.periodEnd}`;
-                    
-                    const sub = document.createElement('div');
-                    sub.className = 'item-subtitle';
-                    sub.textContent = `Uploaded: ${new Date(stmt.uploadDate).toLocaleDateString()} • ${stmt.transactionCount} transactions`;
-                    
-                    left.appendChild(title);
-                    left.appendChild(sub);
-                    
-                    const right = document.createElement('div');
-                    const link = document.createElement('a');
-                    link.href = `/statements/${stmt.id}`;
-                    link.className = 'btn';
-                    link.style.padding = '8px 12px';
-                    link.style.fontSize = '14px';
-                    link.textContent = 'View';
-                    right.appendChild(link);
-                    
-                    li.appendChild(left);
-                    li.appendChild(right);
-                    list.appendChild(li);
+                    const dateObj = new Date(stmt.uploadDate);
+                    const dateStr = dateObj.toLocaleDateString();
+                    const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-semibold text-white">${stmt.periodStart} <span class="text-gray-500 text-sm font-normal mx-1">to</span> ${stmt.periodEnd}</h3>
+                            </div>
+                            <p class="text-gray-400 text-sm mb-4">
+                                <span class="block mb-1">Uploaded: <span class="text-gray-300">${dateStr} ${timeStr}</span></span>
+                                <span>Transactions: <span class="text-white font-medium bg-gray-700 px-2 py-0.5 rounded text-xs">${stmt.transactionCount}</span></span>
+                            </p>
+                        </div>
+                        <div class="mt-2 text-right">
+                            <a href="/statements/${stmt.id}" class="inline-flex items-center justify-center bg-fintech-700 hover:bg-gray-600 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors border border-gray-600 hover:border-gray-500 w-full sm:w-auto">
+                                View Analytics
+                            </a>
+                        </div>
+                    `;
+                    list.appendChild(card);
                 });
                 
-                list.style.display = 'block';
+                list.classList.remove('hidden');
             } catch (err) {
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('emptyMsg').textContent = 'Error loading statements.';
-                document.getElementById('emptyMsg').style.display = 'block';
+                document.getElementById('loader').classList.add('hidden');
+                const emptyMsg = document.getElementById('emptyMsg');
+                emptyMsg.innerHTML = '<p class="text-red-400">Error loading statements. Please try again later.</p>';
+                emptyMsg.classList.remove('hidden');
             }
         });
     </script>

@@ -4,53 +4,141 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KaspiTracker - Statement Analytics</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        kaspi: '#f14635',
+                        fintech: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                            accent: '#3b82f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>KaspiTracker</h1>
-            <p class="item-subtitle">Statement Analytics</p>
-        </header>
+<body class="bg-fintech-900 text-gray-200 font-sans antialiased min-h-screen flex flex-col">
 
-        <nav style="display: flex; justify-content: center; align-items: center; gap: 10px;">
-            <a th:href="@{/}">Upload</a>
-            <a th:href="@{/statements}">My Statements</a>
-            <form th:action="@{/logout}" method="post" style="display: inline; margin: 0;">
-                <button type="submit" style="background: none; border: none; color: var(--primary-color); font-weight: bold; cursor: pointer; font-size: 16px;">Logout</button>
-            </form>
-        </nav>
-
-        <div class="card">
-            <h2 class="mb-2">Summary</h2>
-            <div id="loader" class="loader mt-4" style="display: block;"></div>
-            
-            <div id="summaryContent" style="display: none;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; text-align: center;">
-                    <div style="flex: 1; padding: 15px; background: #ffebee; border-radius: 8px; margin-right: 10px;">
-                        <div class="item-subtitle">Total Expenses (Debit)</div>
-                        <div id="totalDebit" class="amount" style="font-size: 20px; color: #c62828;"></div>
+    <!-- Top Navigation -->
+    <nav class="bg-fintech-800 shadow-lg border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded bg-kaspi flex items-center justify-center text-white font-bold text-xl shadow-[0_0_15px_rgba(241,70,53,0.5)]">
+                        K
                     </div>
-                    <div style="flex: 1; padding: 15px; background: #e8f5e9; border-radius: 8px; margin-left: 10px;">
-                        <div class="item-subtitle">Total Income (Credit)</div>
-                        <div id="totalCredit" class="amount credit" style="font-size: 20px;"></div>
+                    <span class="font-bold text-xl tracking-tight text-white">Kaspi<span class="text-kaspi">Tracker</span></span>
+                </div>
+                
+                <div class="flex items-center gap-6">
+                    <a th:href="@{/}" class="text-gray-300 hover:text-white transition font-medium">Dashboard</a>
+                    <a th:href="@{/statements}" class="text-gray-300 hover:text-white transition font-medium">My Statements</a>
+                    
+                    <form th:action="@{/logout}" method="post" class="m-0">
+                        <button type="submit" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition shadow-md border border-gray-600 hover:border-gray-500">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        
+        <!-- Header -->
+        <div class="flex items-center gap-4">
+            <a th:href="@{/statements}" class="text-gray-400 hover:text-white transition bg-gray-800 p-2 rounded-full border border-gray-700 hover:border-gray-500">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-white">Statement Analytics</h1>
+                <p class="text-gray-400 mt-1">Detailed breakdown of this statement period.</p>
+            </div>
+        </div>
+
+        <div id="loader" class="flex justify-center items-center py-12">
+            <div class="w-8 h-8 border-4 border-fintech-700 border-t-kaspi rounded-full animate-spin"></div>
+        </div>
+
+        <div id="summaryContent" class="hidden space-y-6">
+            <!-- Income/Expense Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Total Expenses -->
+                <div class="bg-fintech-800 rounded-xl p-6 border border-gray-700 shadow-lg relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-gray-400 text-sm font-semibold uppercase tracking-wider">Total Expenses (Debit)</h3>
+                            <p id="totalDebit" class="text-3xl font-bold text-red-400 mt-2">0 ₸</p>
+                        </div>
+                        <div class="p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                            <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
+                        </div>
                     </div>
                 </div>
 
-                <h3 class="mb-2">Expenses by Category</h3>
-                <ul id="categoryList" class="list-group">
-                    <!-- Filled via JS -->
-                </ul>
+                <!-- Total Income -->
+                <div class="bg-fintech-800 rounded-xl p-6 border border-gray-700 shadow-lg relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-gray-400 text-sm font-semibold uppercase tracking-wider">Total Income (Credit)</h3>
+                            <p id="totalCredit" class="text-3xl font-bold text-emerald-400 mt-2">0 ₸</p>
+                        </div>
+                        <div class="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                            <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expenses by Category -->
+            <div class="bg-fintech-800 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-700">
+                    <h3 class="text-lg font-semibold text-white">Expenses by Category</h3>
+                </div>
+                <div class="p-6">
+                    <div id="categoryList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Filled via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="bg-fintech-800 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-700">
+                    <h3 class="text-lg font-semibold text-white">Transactions</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-800/50 text-gray-400 text-xs uppercase tracking-wider">
+                                <th class="px-6 py-3 font-semibold">Date</th>
+                                <th class="px-6 py-3 font-semibold">Merchant / Details</th>
+                                <th class="px-6 py-3 font-semibold">Category</th>
+                                <th class="px-6 py-3 font-semibold text-right">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionList" class="divide-y divide-gray-700 text-sm">
+                            <!-- Filled via JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-        
-        <div class="card">
-            <h2 class="mb-2">Transactions</h2>
-            <ul id="transactionList" class="list-group">
-                <!-- Filled via JS -->
-            </ul>
-        </div>
-    </div>
+
+    </main>
 
     <!-- Pass ID from model -->
     <script th:inline="javascript">
@@ -64,29 +152,23 @@
                 const analyticsRes = await fetch(`/api/analytics/summary?statementId=${stmtId}`);
                 const analytics = await analyticsRes.json();
                 
-                document.getElementById('totalDebit').textContent = analytics.totalDebit.toLocaleString('ru-RU') + ' ₸';
-                document.getElementById('totalCredit').textContent = '+' + analytics.totalCredit.toLocaleString('ru-RU') + ' ₸';
+                document.getElementById('totalDebit').textContent = analytics.totalDebit.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ₸';
+                document.getElementById('totalCredit').textContent = '+' + analytics.totalCredit.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ₸';
                 
                 const catList = document.getElementById('categoryList');
                 analytics.categories.forEach(cat => {
-                    const li = document.createElement('li');
-                    li.className = 'list-item';
+                    const div = document.createElement('div');
+                    div.className = 'bg-gray-800/50 rounded-lg p-4 border border-gray-700 flex justify-between items-center';
                     
-                    const left = document.createElement('div');
-                    left.className = 'item-title';
-                    left.textContent = cat.categoryName;
-                    
-                    const right = document.createElement('div');
-                    right.className = 'amount';
-                    right.textContent = cat.totalAmount.toLocaleString('ru-RU') + ' ₸';
-                    
-                    li.appendChild(left);
-                    li.appendChild(right);
-                    catList.appendChild(li);
+                    div.innerHTML = `
+                        <span class="text-gray-300 font-medium">${cat.categoryName}</span>
+                        <span class="text-white font-bold">${cat.totalAmount.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ₸</span>
+                    `;
+                    catList.appendChild(div);
                 });
                 
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('summaryContent').style.display = 'block';
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('summaryContent').classList.remove('hidden');
 
                 // Fetch Transactions
                 const txRes = await fetch(`/api/transactions?statementId=${stmtId}`);
@@ -94,32 +176,38 @@
                 
                 const txList = document.getElementById('transactionList');
                 txs.forEach(tx => {
-                    const li = document.createElement('li');
-                    li.className = 'list-item';
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-750/30 transition-colors';
                     
-                    const left = document.createElement('div');
-                    const title = document.createElement('div');
-                    title.className = 'item-title';
-                    title.textContent = tx.merchant;
+                    const isCredit = tx.sign === 'CREDIT';
+                    const amountClass = isCredit ? 'text-emerald-400' : 'text-gray-200';
+                    const signStr = isCredit ? '+' : '-';
                     
-                    const sub = document.createElement('div');
-                    sub.className = 'item-subtitle';
-                    sub.textContent = `${tx.date} • ${tx.categoryName || 'Uncategorized'} • ${tx.operationType}`;
-                    
-                    left.appendChild(title);
-                    left.appendChild(sub);
-                    
-                    const right = document.createElement('div');
-                    right.className = `amount ${tx.sign === 'CREDIT' ? 'credit' : 'debit'}`;
-                    right.textContent = (tx.sign === 'CREDIT' ? '+' : '-') + tx.amount.toLocaleString('ru-RU') + ' ₸';
-                    
-                    li.appendChild(left);
-                    li.appendChild(right);
-                    txList.appendChild(li);
+                    const catName = tx.categoryName || 'Uncategorized';
+                    const catClass = tx.categoryName ? 'bg-fintech-accent/10 text-fintech-accent border-fintech-accent/20' : 'bg-gray-700 text-gray-400 border-gray-600';
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-300">${tx.date}</td>
+                        <td class="px-6 py-4">
+                            <p class="text-gray-200 font-medium truncate max-w-xs">${tx.merchant}</p>
+                            <p class="text-gray-500 text-xs mt-0.5">${tx.operationType}</p>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-medium border ${catClass}">
+                                ${catName}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right font-semibold ${amountClass}">
+                            ${signStr}${tx.amount.toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ₸
+                        </td>
+                    `;
+                    txList.appendChild(tr);
                 });
 
             } catch (err) {
                 console.error('Failed to load data', err);
+                document.getElementById('loader').classList.add('hidden');
+                // Could add error UI here
             }
         });
     </script>
