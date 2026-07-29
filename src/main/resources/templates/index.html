@@ -3,63 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KaspiTracker - Upload Statement</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>KaspiTracker</h1>
-            <p class="item-subtitle">Expense Analytics</p>
-        </header>
-
-        <nav style="display: flex; justify-content: center; align-items: center; gap: 10px;">
-            <a th:href="@{/}">Upload</a>
-            <a th:href="@{/statements}">My Statements</a>
-            <form th:action="@{/logout}" method="post" style="display: inline; margin: 0;">
-                <button type="submit" style="background: none; border: none; color: var(--primary-color); font-weight: bold; cursor: pointer; font-size: 16px;">Logout</button>
-            </form>
-        </nav>
-
-        <div class="card">
-            <h2 class="mb-2">Upload Kaspi Statement</h2>
-            <p class="item-subtitle mb-2">Select your Kaspi Bank PDF statement (English version) to parse and categorize your transactions.</p>
-            
-            <div id="alertBox" class="alert"></div>
-
-            <form id="uploadForm">
-                <div class="form-group">
-                    <input type="file" id="pdfFile" name="file" accept="application/pdf" required>
-                </div>
-                <button type="submit" id="submitBtn" class="btn">Upload & Parse</button>
-            </form>
-            
-            <div id="loader" class="loader mt-4"></div>
-        </div>
-
-        <div id="resultCard" class="card" style="display: none;">
-            <h2 class="mb-2">Upload Successful!</h2>
-            <p>Statement saved. <span id="txCount" class="amount"></span> transactions processed.</p>
-            <a id="detailsLink" href="#" class="btn mt-4">View Analytics</a>
-        </div>
-    </div>
-
+    <title>KaspiTracker - FinTech Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        kaspi: '#f14635', // Kaspi red
+                        fintech: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                            accent: '#3b82f6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Hide scrollbar for a cleaner look but keep functionality */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-fintech-900 text-gray-200 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Top Navigation -->
+    <nav class="bg-fintech-800 shadow-lg border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <!-- App Logo / Icon -->
+                    <div class="w-8 h-8 rounded bg-kaspi flex items-center justify-center text-white font-bold text-xl shadow-[0_0_15px_rgba(241,70,53,0.5)]">
+                        K
+                    </div>
+                    <span class="font-bold text-xl tracking-tight text-white">Kaspi<span class="text-kaspi">Tracker</span></span>
+                </div>
+                
+                <div class="flex items-center gap-6">
+                    <a th:href="@{/statements}" class="text-gray-300 hover:text-white transition font-medium">My Statements</a>
+                    
+                    <form th:action="@{/logout}" method="post" class="m-0">
+                        <button type="submit" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition shadow-md border border-gray-600 hover:border-gray-500">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        
+        <!-- Header -->
+        <div>
+            <h1 class="text-2xl font-bold text-white">Financial Overview</h1>
+            <p class="text-gray-400 mt-1">Analytics based on your uploaded statements.</p>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Total Expenses Card -->
+            <div class="bg-fintech-800 rounded-xl p-6 border border-gray-700 shadow-lg relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-kaspi/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+                <h3 class="text-gray-400 text-sm font-semibold uppercase tracking-wider">Total Expenses</h3>
+                <p class="text-3xl font-bold text-white mt-2">
+                    <span th:text="${totalExpenses != null ? totalExpenses : '0.00'}">0.00</span> ₸
+                </p>
+            </div>
+
+            <!-- Top Category Card -->
+            <div class="bg-fintech-800 rounded-xl p-6 border border-gray-700 shadow-lg relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-fintech-accent/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+                <h3 class="text-gray-400 text-sm font-semibold uppercase tracking-wider">Top Category</h3>
+                <p class="text-2xl font-bold text-white mt-2 truncate" th:text="${topCategory}">None</p>
+            </div>
+
+            <!-- Total Transactions Card -->
+            <div class="bg-fintech-800 rounded-xl p-6 border border-gray-700 shadow-lg relative overflow-hidden group">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+                <h3 class="text-gray-400 text-sm font-semibold uppercase tracking-wider">Total Transactions</h3>
+                <p class="text-3xl font-bold text-white mt-2" th:text="${transactionCount}">0</p>
+            </div>
+        </div>
+
+        <!-- Charts and Upload Area -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Chart Area -->
+            <div class="lg:col-span-2 bg-fintech-800 rounded-xl p-6 border border-gray-700 shadow-lg">
+                <h3 class="text-lg font-semibold text-white mb-4">Category Distribution</h3>
+                <div class="relative h-64 w-full flex items-center justify-center">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="bg-fintech-800 rounded-xl p-6 border border-gray-700 shadow-lg flex flex-col">
+                <h3 class="text-lg font-semibold text-white mb-4">Upload Statement</h3>
+                
+                <div id="alertBox" class="hidden mb-4 p-3 rounded-lg text-sm font-medium"></div>
+
+                <form id="uploadForm" class="flex-grow flex flex-col">
+                    <div id="dropZone" class="flex-grow border-2 border-dashed border-gray-600 rounded-xl bg-gray-800/50 hover:bg-gray-700/50 transition-colors flex flex-col items-center justify-center p-6 cursor-pointer relative">
+                        <input type="file" id="pdfFile" name="file" accept="application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
+                        <svg class="w-10 h-10 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <p class="text-gray-300 font-medium text-center">Drag & Drop PDF here</p>
+                        <p class="text-gray-500 text-xs mt-2 text-center">or click to browse</p>
+                        <p id="fileName" class="text-kaspi text-sm font-bold mt-3 hidden truncate max-w-full px-2"></p>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="mt-4 w-full bg-kaspi hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition flex justify-center items-center gap-2 disabled:opacity-50">
+                        <span>Process Statement</span>
+                        <div id="loader" class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    </button>
+                </form>
+
+                <div id="resultCard" class="hidden mt-4 bg-emerald-900/40 border border-emerald-500/30 rounded-lg p-4">
+                    <p class="text-emerald-400 font-medium text-sm">Upload Successful!</p>
+                    <p class="text-gray-300 text-xs mt-1"><span id="txCount" class="font-bold text-white"></span> transactions processed.</p>
+                    <a id="detailsLink" href="#" class="mt-2 inline-block text-xs font-semibold text-emerald-400 hover:text-emerald-300 underline">View Statement Analytics</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Transactions Table -->
+        <div class="bg-fintech-800 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-700 bg-fintech-800">
+                <h3 class="text-lg font-semibold text-white">Recent Transactions</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-800/50 text-gray-400 text-xs uppercase tracking-wider">
+                            <th class="px-6 py-3 font-semibold">Date</th>
+                            <th class="px-6 py-3 font-semibold">Merchant / Details</th>
+                            <th class="px-6 py-3 font-semibold">Category</th>
+                            <th class="px-6 py-3 font-semibold text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700 text-sm">
+                        <tr th:each="tx : ${transactions}" class="hover:bg-gray-750/30 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-300" th:text="${tx.date}">2026-07-29</td>
+                            <td class="px-6 py-4">
+                                <p class="text-gray-200 font-medium truncate max-w-xs" th:text="${tx.merchantDetails}">Merchant Name</p>
+                                <p class="text-gray-500 text-xs mt-0.5" th:text="${tx.operationType}">Purchase</p>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-medium border"
+                                      th:classappend="${tx.category != null ? 'bg-fintech-accent/10 text-fintech-accent border-fintech-accent/20' : 'bg-gray-700 text-gray-400 border-gray-600'}"
+                                      th:text="${tx.category != null ? tx.category.name : 'Uncategorized'}">
+                                    Category
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right font-semibold"
+                                th:classappend="${tx.sign.name() == 'CREDIT' ? 'text-emerald-400' : 'text-gray-200'}">
+                                <span th:text="${tx.sign.name() == 'CREDIT' ? '+' : '-'}">-</span>
+                                <span th:text="${tx.amount}">100.00</span> ₸
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(transactions)}">
+                            <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                No transactions found. Upload a statement to get started.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Chart.js and Upload Scripts -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const chartLabels = /*[[${chartLabels}]]*/ [];
+        const chartData = /*[[${chartData}]]*/ [];
+        /*]]>*/
+
+        // Render Chart
+        if (chartLabels.length > 0 && chartData.length > 0) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            
+            // FinTech Color Palette
+            const backgroundColors = [
+                'rgba(59, 130, 246, 0.8)', // blue
+                'rgba(241, 70, 53, 0.8)',  // kaspi red
+                'rgba(16, 185, 129, 0.8)', // emerald
+                'rgba(245, 158, 11, 0.8)', // amber
+                'rgba(139, 92, 246, 0.8)', // purple
+                'rgba(236, 72, 153, 0.8)', // pink
+                'rgba(14, 165, 233, 0.8)'  // sky
+            ];
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#cbd5e1', // text-slate-300
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 11
+                                },
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#cbd5e1',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed + ' ₸';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            // Placeholder if no data
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            ctx.font = '14px sans-serif';
+            ctx.fillStyle = '#64748b';
+            ctx.textAlign = 'center';
+            ctx.fillText('No data available', ctx.canvas.width/2, ctx.canvas.height/2);
+        }
+
+        // Drag and Drop Logic
+        const fileInput = document.getElementById('pdfFile');
+        const dropZone = document.getElementById('dropZone');
+        const fileNameDisplay = document.getElementById('fileName');
+
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                fileNameDisplay.textContent = this.files[0].name;
+                fileNameDisplay.classList.remove('hidden');
+                dropZone.classList.add('border-kaspi', 'bg-gray-700/80');
+            } else {
+                fileNameDisplay.classList.add('hidden');
+                dropZone.classList.remove('border-kaspi', 'bg-gray-700/80');
+            }
+        });
+
+        // Upload Form Logic
         document.getElementById('uploadForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const fileInput = document.getElementById('pdfFile');
             if (fileInput.files.length === 0) return;
 
             const btn = document.getElementById('submitBtn');
             const loader = document.getElementById('loader');
             const alertBox = document.getElementById('alertBox');
             const resultCard = document.getElementById('resultCard');
+            const btnText = btn.querySelector('span');
 
             btn.disabled = true;
-            loader.style.display = 'block';
-            alertBox.style.display = 'none';
-            resultCard.style.display = 'none';
+            btnText.classList.add('opacity-0');
+            loader.classList.remove('hidden');
+            alertBox.classList.add('hidden');
+            resultCard.classList.add('hidden');
 
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
@@ -74,34 +313,38 @@
 
                 if (response.ok) {
                     if (data.success) {
-                        alertBox.className = 'alert success';
+                        alertBox.className = 'mb-4 p-3 rounded-lg text-sm font-medium bg-emerald-900/50 text-emerald-400 border border-emerald-500/50';
                         alertBox.textContent = data.message;
-                        alertBox.style.display = 'block';
+                        alertBox.classList.remove('hidden');
                         
                         document.getElementById('txCount').textContent = data.savedTransactionsCount;
                         document.getElementById('detailsLink').href = '/statements/' + data.statementId;
-                        resultCard.style.display = 'block';
+                        resultCard.classList.remove('hidden');
+                        
+                        // Optional: reload after short delay to refresh dashboard stats
+                        setTimeout(() => window.location.reload(), 2000);
                     } else if (data.isDuplicate) {
-                        alertBox.className = 'alert error';
+                        alertBox.className = 'mb-4 p-3 rounded-lg text-sm font-medium bg-amber-900/50 text-amber-400 border border-amber-500/50';
                         alertBox.textContent = data.message;
-                        alertBox.style.display = 'block';
+                        alertBox.classList.remove('hidden');
                         
                         document.getElementById('detailsLink').href = '/statements/' + data.statementId;
                         document.getElementById('detailsLink').textContent = 'View Existing Statement';
-                        resultCard.style.display = 'block';
+                        resultCard.classList.remove('hidden');
                     }
                 } else {
-                    alertBox.className = 'alert error';
+                    alertBox.className = 'mb-4 p-3 rounded-lg text-sm font-medium bg-red-900/50 text-red-400 border border-red-500/50';
                     alertBox.textContent = data.message || 'An error occurred during upload.';
-                    alertBox.style.display = 'block';
+                    alertBox.classList.remove('hidden');
                 }
             } catch (err) {
-                alertBox.className = 'alert error';
+                alertBox.className = 'mb-4 p-3 rounded-lg text-sm font-medium bg-red-900/50 text-red-400 border border-red-500/50';
                 alertBox.textContent = 'Network error. Please try again.';
-                alertBox.style.display = 'block';
+                alertBox.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
-                loader.style.display = 'none';
+                btnText.classList.remove('opacity-0');
+                loader.classList.add('hidden');
             }
         });
     </script>
