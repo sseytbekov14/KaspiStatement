@@ -33,7 +33,7 @@ public class BackfillCategorizationService {
      */
     @Transactional
     public int backfillUncategorizedTransactions() {
-        List<Transaction> uncategorizedTransactions = transactionRepository.findByCategoryIsNull();
+        List<Transaction> uncategorizedTransactions = transactionRepository.findUncategorizedTransactions();
         if (uncategorizedTransactions.isEmpty()) {
             log.info("No uncategorized transactions found for backfill.");
             return 0;

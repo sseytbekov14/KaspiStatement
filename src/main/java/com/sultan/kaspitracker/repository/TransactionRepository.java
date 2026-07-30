@@ -21,5 +21,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             com.sultan.kaspitracker.parser.OperationType operationType
     );
 
-    List<Transaction> findByCategoryIsNull();
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM Transaction t LEFT JOIN t.category c WHERE c IS NULL OR c.name = 'Uncategorized'")
+    List<Transaction> findUncategorizedTransactions();
 }
