@@ -20,4 +20,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             String merchantDetails, 
             com.sultan.kaspitracker.parser.OperationType operationType
     );
+
+    List<Transaction> findByCategoryIsNull();
 }

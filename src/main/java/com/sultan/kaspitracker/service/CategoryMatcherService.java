@@ -21,19 +21,19 @@ public class CategoryMatcherService {
     private static final double MAX_DISTANCE_THRESHOLD = 0.15;
 
     private final MerchantCategoryMappingRepository mappingRepository;
+    private final AiCategorizationService aiCategorizationService;
     private final JaroWinklerDistance jaroWinkler = new JaroWinklerDistance();
 
-    public CategoryMatcherService(MerchantCategoryMappingRepository mappingRepository) {
+    public CategoryMatcherService(MerchantCategoryMappingRepository mappingRepository, 
+                                  AiCategorizationService aiCategorizationService) {
         this.mappingRepository = mappingRepository;
+        this.aiCategorizationService = aiCategorizationService;
     }
 
     /**
      * Attempts to find a category for a raw merchant string.
      * Uses exact matching first, then falls back to fuzzy matching using Jaro-Winkler distance.
-     * 
-     * Note: Cyrillic strings (e.g. "Живая Вода") will generally not match against Latin 
-     * dictionaries unless explicitly mapped. Cross-lingual matching is beyond the scope of 
-     * this rule-based matcher and will be handled by a future AI fallback mechanism.
+     * Finally, falls back to Google Gemini AI.
      *
      * @param rawMerchant The raw merchant string from the PDF transaction
      * @return An Optional containing the matched Category, or empty if no match found.
@@ -74,9 +74,26 @@ public class CategoryMatcherService {
             return Optional.of(bestMatch.getCategory());
         }
 
-        log.debug("No match found for '{}'. Best fuzzy distance was {} against '{}'", 
+        log.debug("No match found for '{}'. Best fuzzy distance was {} against '{}'. Falling back to AI.", 
                 normalized, bestDistance, bestMatch != null ? bestMatch.getMerchantPattern() : "N/A");
         
+        // 3. Try AI Fallback
+        Category aiCategory = aiCategorizationService.categorizeMerchant(rawMerchant);
+        if (aiCategory != null) {
+            log.info("AI successfully categorized '{}' as '{}'", rawMerchant, aiCategory.getName());
+            
+            // Save this new mapping so we don't have to call the AI next time
+            MerchantCategoryMapping newMapping = new MerchantCategoryMapping(
+                    normalized, 
+                    aiCategory, 
+                    com.sultan.kaspitracker.entity.MappingSource.AI_FALLBACK, 
+                    java.time.Instant.now()
+            );
+            mappingRepository.save(newMapping);
+            
+            return Optional.of(aiCategory);
+        }
+
         return Optional.empty();
     }
 

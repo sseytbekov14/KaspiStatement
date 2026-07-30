@@ -19,6 +19,7 @@ import static org.mockito.Mockito.when;
 class CategoryMatcherServiceTest {
 
     private MerchantCategoryMappingRepository repositoryMock;
+    private AiCategorizationService aiCategorizationServiceMock;
     private CategoryMatcherService matcherService;
 
     private Category groceriesCategory;
@@ -27,7 +28,8 @@ class CategoryMatcherServiceTest {
     @BeforeEach
     void setUp() {
         repositoryMock = mock(MerchantCategoryMappingRepository.class);
-        matcherService = new CategoryMatcherService(repositoryMock);
+        aiCategorizationServiceMock = mock(AiCategorizationService.class);
+        matcherService = new CategoryMatcherService(repositoryMock, aiCategorizationServiceMock);
 
         groceriesCategory = new Category("Groceries");
         transportCategory = new Category("Transport");
