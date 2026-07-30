@@ -20,11 +20,14 @@ public class AdminApiController {
 
     @PostMapping("/backfill-categories")
     public ResponseEntity<Map<String, Object>> triggerBackfill() {
-        int updatedCount = backfillService.backfillUncategorizedTransactions();
+        Map<String, Integer> stats = backfillService.backfillUncategorizedTransactions();
+        int foundCount = stats.get("found");
+        int updatedCount = stats.get("updated");
         return ResponseEntity.ok(Map.of(
                 "success", true,
+                "foundCount", foundCount,
                 "updatedCount", updatedCount,
-                "message", "Backfill completed successfully. Updated " + updatedCount + " transactions."
+                "message", "Backfill completed successfully. Found " + foundCount + " transactions, updated " + updatedCount + "."
         ));
     }
 }
