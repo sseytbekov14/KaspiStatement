@@ -39,7 +39,7 @@ public class BackfillCategorizationService {
             return 0;
         }
 
-        log.info("Found {} uncategorized transactions to process.", uncategorizedTransactions.size());
+        log.info("Found {} transactions to backfill", uncategorizedTransactions.size());
 
         int updatedCount = 0;
         for (Transaction transaction : uncategorizedTransactions) {
