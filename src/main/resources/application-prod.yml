@@ -9,12 +9,12 @@ server:
         same-site: lax
 spring:
   ai:
-    google:
-      genai:
-        api-key: ${GEMINI_API_KEY}
-        chat:
-          options:
-            model: gemini-1.5-flash
+    openai:
+      api-key: ${GEMINI_API_KEY}
+      base-url: https://generativelanguage.googleapis.com/v1beta/openai/
+      chat:
+        options:
+          model: gemini-1.5-flash
   datasource:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
