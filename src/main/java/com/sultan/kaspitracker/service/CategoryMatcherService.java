@@ -46,7 +46,9 @@ public class CategoryMatcherService {
         String normalized = normalize(rawMerchant);
         
         // Load mappings (simple fetch since data size is very small, ~20-30 rows)
-        List<MerchantCategoryMapping> allMappings = mappingRepository.findAll();
+        List<MerchantCategoryMapping> allMappings = mappingRepository.findAll().stream()
+                .filter(m -> !isUncategorized(m.getCategory()))
+                .toList();
 
         // 1. Try Exact Match
         for (MerchantCategoryMapping mapping : allMappings) {
@@ -99,5 +101,13 @@ public class CategoryMatcherService {
 
     private String normalize(String input) {
         return input.trim().toUpperCase().replaceAll("\\s+", " ");
+    }
+
+    private boolean isUncategorized(Category category) {
+        if (category == null || category.getName() == null) {
+            return true;
+        }
+        String name = category.getName().toLowerCase();
+        return name.equals("uncategorized") || name.equals("none") || name.equals("без категории") || name.equals("other");
     }
 }

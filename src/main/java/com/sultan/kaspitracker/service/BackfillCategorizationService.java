@@ -39,21 +39,33 @@ public class BackfillCategorizationService {
             return 0;
         }
 
-        log.info("Found {} uncategorized transactions. Starting backfill...", uncategorizedTransactions.size());
+        log.info("Found {} uncategorized transactions to process.", uncategorizedTransactions.size());
 
         int updatedCount = 0;
         for (Transaction transaction : uncategorizedTransactions) {
             String merchantDetails = transaction.getMerchantDetails();
             
+            // log the exact merchants being sent to categorization
+            log.info("Processing merchant for backfill: '{}'", merchantDetails);
+            
             Optional<Category> categoryOpt = categoryMatcherService.matchCategory(merchantDetails);
             if (categoryOpt.isPresent()) {
-                transaction.setCategory(categoryOpt.get());
-                updatedCount++;
+                Category newCat = categoryOpt.get();
+                // Check if the AI returned a real category, not Uncategorized
+                if (newCat.getName() != null && !newCat.getName().equalsIgnoreCase("Uncategorized") && 
+                    !newCat.getName().equalsIgnoreCase("None") && !newCat.getName().equalsIgnoreCase("Other") && 
+                    !newCat.getName().equalsIgnoreCase("Без категории")) {
+                    
+                    transaction.setCategory(newCat);
+                    transactionRepository.save(transaction); // Explicitly save to ensure flush
+                    updatedCount++;
+                } else {
+                    log.info("AI still returned Uncategorized for merchant '{}', skipping count.", merchantDetails);
+                }
             }
         }
 
-        // Transactions are saved automatically due to @Transactional and JPA dirty checking
-        log.info("Backfill complete. Successfully categorized {} out of {} transactions.", 
+        log.info("Backfill complete. Successfully mapped {} out of {} transactions to real categories.", 
                  updatedCount, uncategorizedTransactions.size());
                  
         return updatedCount;
