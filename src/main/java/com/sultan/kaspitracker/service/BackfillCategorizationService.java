@@ -62,6 +62,8 @@ public class BackfillCategorizationService {
                 } else {
                     log.info("AI still returned Uncategorized for merchant '{}', skipping count.", merchantDetails);
                 }
+            } else {
+                log.info("AI returned null (or error) for merchant '{}'", merchantDetails);
             }
         }
 
