@@ -69,16 +69,16 @@
                     <div class="w-7 h-7 sm:w-8 sm:h-8 rounded bg-kaspi flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-[0_0_15px_rgba(241,70,53,0.5)]">
                         K
                     </div>
-                    <span class="font-bold text-lg sm:text-xl tracking-tight text-white">Kaspi<span class="text-kaspi">Tracker</span></span>
+                    <span class="hidden sm:inline font-bold text-lg sm:text-xl tracking-tight text-white">Kaspi<span class="text-kaspi">Tracker</span></span>
                 </div>
                 
-                <div class="flex items-center gap-3 sm:gap-6">
-                    <a th:href="@{/}" class="text-white border-b-2 border-kaspi pb-1 font-medium text-sm sm:text-base">Dashboard</a>
-                    <a th:href="@{/statements}" class="text-gray-300 hover:text-white transition font-medium text-sm sm:text-base">Statements</a>
+                <div class="flex items-center gap-2 sm:gap-6">
+                    <a th:href="@{/}" class="text-white border-b-2 border-kaspi pb-1 font-medium text-[13px] sm:text-base">Dashboard</a>
+                    <a th:href="@{/statements}" class="text-gray-300 hover:text-white transition font-medium text-[13px] sm:text-base">Statements</a>
                     
                     <form th:action="@{/logout}" method="post" class="m-0">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                        <button type="submit" class="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white px-3 py-2 sm:px-4 rounded-lg font-medium transition shadow-md border border-gray-600 text-sm min-h-[44px]">
+                        <button type="submit" class="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg font-medium transition shadow-md border border-gray-600 text-[13px] sm:text-sm min-h-[36px] sm:min-h-[44px]">
                             Logout
                         </button>
                     </form>
@@ -126,9 +126,9 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
             
             <!-- Chart Area -->
-            <div class="lg:col-span-2 bg-fintech-800 rounded-xl p-4 sm:p-6 border border-gray-700 shadow-lg w-full max-w-full overflow-x-hidden">
+            <div class="lg:col-span-2 bg-fintech-800 rounded-xl p-4 sm:p-6 border border-gray-700 shadow-lg w-full max-w-full overflow-x-hidden flex flex-col">
                 <h3 class="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4">Category Distribution</h3>
-                <div class="relative h-[220px] md:h-[300px] w-full flex items-center justify-center">
+                <div class="relative h-[280px] md:h-[300px] w-full flex items-center justify-center flex-grow">
                     <canvas id="categoryChart"></canvas>
                 </div>
             </div>
@@ -293,7 +293,7 @@
                                     size: isMobile ? 10 : 11
                                 },
                                 usePointStyle: true,
-                                padding: isMobile ? 12 : 20,
+                                padding: isMobile ? 16 : 20,
                                 boxWidth: isMobile ? 8 : 12
                             }
                         },
