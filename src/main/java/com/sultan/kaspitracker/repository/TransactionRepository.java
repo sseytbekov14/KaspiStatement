@@ -13,4 +13,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByStatementIdOrderByDateDesc(Long statementId);
     
     int countByStatementId(Long statementId);
+    
+    boolean existsByDateAndAmountAndMerchantDetailsAndOperationType(
+            java.time.LocalDate date, 
+            java.math.BigDecimal amount, 
+            String merchantDetails, 
+            com.sultan.kaspitracker.parser.OperationType operationType
+    );
 }

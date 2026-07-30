@@ -76,6 +76,15 @@ public class StatementPersistenceService {
         log.info("Saved new statement with ID {} for period {} to {}", statement.getId(), periodStart, periodEnd);
 
         List<Transaction> transactionsToSave = parsedTransactions.stream()
+                .filter(pt -> {
+                    boolean exists = transactionRepository.existsByDateAndAmountAndMerchantDetailsAndOperationType(
+                            pt.date(), pt.amount(), pt.merchantDetails(), pt.operationType()
+                    );
+                    if (exists) {
+                        log.debug("Skipping duplicate transaction: {} {} {}", pt.date(), pt.amount(), pt.merchantDetails());
+                    }
+                    return !exists;
+                })
                 .map(pt -> {
                     Transaction transaction = new Transaction(
                             statement,

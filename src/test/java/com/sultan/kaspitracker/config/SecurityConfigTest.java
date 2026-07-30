@@ -16,6 +16,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(SecurityConfig.class)
 public class SecurityConfigTest {
 
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private com.sultan.kaspitracker.repository.TransactionRepository transactionRepository;
+
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private com.sultan.kaspitracker.repository.StatementRepository statementRepository;
+
     @Autowired
     private MockMvc mockMvc;
 
