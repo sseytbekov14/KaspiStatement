@@ -57,14 +57,15 @@ public class AiCategorizationService {
         );
 
         try {
-            log.debug("Calling Gemini API to categorize merchant: '{}'", merchantName);
-            String aiResponse = chatModel.call(new org.springframework.ai.chat.prompt.Prompt(promptText, org.springframework.ai.openai.OpenAiChatOptions.builder().withModel("gemini-2.5-flash").build())).getResult().getOutput().getContent();
-
             try {
-                Thread.sleep(15000); // 15 seconds delay to respect the 5 RPM free-tier limit
+                log.info("Applying rate limit delay of 15 seconds...");
+                Thread.sleep(15000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+
+            log.debug("Calling Gemini API to categorize merchant: '{}'", merchantName);
+            String aiResponse = chatModel.call(new org.springframework.ai.chat.prompt.Prompt(promptText, org.springframework.ai.openai.OpenAiChatOptions.builder().withModel("gemini-2.5-flash").build())).getResult().getOutput().getContent();
 
             if (aiResponse == null) {
                 log.warn("Gemini API returned null response for merchant '{}'", merchantName);
