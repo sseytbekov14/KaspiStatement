@@ -2,12 +2,9 @@ spring:
   application:
     name: kaspitracker
   ai:
-    vertex:
-      ai:
-        gemini:
-          api-key: ${GEMINI_API_KEY:}
-          project-id: dummy-project-id
-          location: us-central1
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY:}
     openai:
       api-key: ${GEMINI_API_KEY:}
       base-url: https://generativelanguage.googleapis.com/v1beta/openai/
