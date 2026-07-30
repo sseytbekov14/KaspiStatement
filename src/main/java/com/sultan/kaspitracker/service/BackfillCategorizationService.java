@@ -33,13 +33,16 @@ public class BackfillCategorizationService {
      */
     @Transactional
     public int backfillUncategorizedTransactions() {
+        long totalTx = transactionRepository.count();
+        log.info("Total transactions in DB according to repository: {}", totalTx);
+
         List<Transaction> uncategorizedTransactions = transactionRepository.findUncategorizedTransactions();
+        log.info("Found {} uncategorized transactions via Native Query", uncategorizedTransactions.size());
+
         if (uncategorizedTransactions.isEmpty()) {
             log.info("No uncategorized transactions found for backfill.");
             return 0;
         }
-
-        log.info("Found {} transactions to backfill", uncategorizedTransactions.size());
 
         int updatedCount = 0;
         for (Transaction transaction : uncategorizedTransactions) {
