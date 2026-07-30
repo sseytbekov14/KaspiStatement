@@ -16,11 +16,11 @@ public class AiCategorizationService {
 
     private static final Logger log = LoggerFactory.getLogger(AiCategorizationService.class);
 
-    private final ChatClient chatClient;
+    private final ChatModel chatModel;
     private final CategoryRepository categoryRepository;
 
     public AiCategorizationService(ChatModel chatModel, CategoryRepository categoryRepository) {
-        this.chatClient = ChatClient.builder(chatModel).build();
+        this.chatModel = chatModel;
         this.categoryRepository = categoryRepository;
     }
 
@@ -58,10 +58,7 @@ public class AiCategorizationService {
 
         try {
             log.debug("Calling Gemini API to categorize merchant: '{}'", merchantName);
-            String aiResponse = chatClient.prompt()
-                    .user(promptText)
-                    .call()
-                    .content();
+            String aiResponse = chatModel.call(new org.springframework.ai.chat.prompt.Prompt(promptText, org.springframework.ai.openai.OpenAiChatOptions.builder().withModel("gemini-1.5-flash-latest").build())).getResult().getOutput().getContent();
 
             if (aiResponse == null) {
                 log.warn("Gemini API returned null response for merchant '{}'", merchantName);
