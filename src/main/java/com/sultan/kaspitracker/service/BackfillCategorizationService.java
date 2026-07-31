@@ -31,8 +31,9 @@ public class BackfillCategorizationService {
      * 
      * @return The number of transactions successfully updated.
      */
+    @org.springframework.scheduling.annotation.Async
     @Transactional
-    public int backfillUncategorizedTransactions() {
+    public void backfillUncategorizedTransactions() {
         long totalTx = transactionRepository.count();
         log.info("Total transactions in DB according to repository: {}", totalTx);
 
@@ -41,7 +42,7 @@ public class BackfillCategorizationService {
 
         if (uncategorizedTransactions.isEmpty()) {
             log.info("No uncategorized transactions found for backfill.");
-            return 0;
+            return;
         }
 
         int updatedCount = 0;
@@ -72,7 +73,5 @@ public class BackfillCategorizationService {
 
         log.info("Backfill complete. Successfully mapped {} out of {} transactions to real categories.", 
                  updatedCount, uncategorizedTransactions.size());
-                 
-        return updatedCount;
     }
 }

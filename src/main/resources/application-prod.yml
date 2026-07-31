@@ -14,7 +14,7 @@ spring:
       base-url: https://generativelanguage.googleapis.com/v1beta/openai/
       chat:
         options:
-          model: gemini-2.5-flash
+          model: gemini-1.5-flash-8b
   datasource:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
