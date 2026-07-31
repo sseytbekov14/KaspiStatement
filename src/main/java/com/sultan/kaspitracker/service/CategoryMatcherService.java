@@ -84,14 +84,22 @@ public class CategoryMatcherService {
         if (aiCategory != null) {
             log.info("AI successfully categorized '{}' as '{}'", rawMerchant, aiCategory.getName());
             
-            // Save this new mapping so we don't have to call the AI next time
-            MerchantCategoryMapping newMapping = new MerchantCategoryMapping(
-                    normalized, 
-                    aiCategory, 
-                    com.sultan.kaspitracker.entity.MappingSource.AI_FALLBACK, 
-                    java.time.Instant.now()
-            );
-            mappingRepository.save(newMapping);
+            // Check if another transaction in the loop already saved this pattern
+            if (mappingRepository.findByMerchantPattern(normalized).isPresent()) {
+                log.warn("Mapping for '{}' already exists in DB, skipping save.", normalized);
+            } else {
+                MerchantCategoryMapping newMapping = new MerchantCategoryMapping(
+                        normalized, 
+                        aiCategory, 
+                        com.sultan.kaspitracker.entity.MappingSource.AI_FALLBACK, 
+                        java.time.Instant.now()
+                );
+                try {
+                    mappingRepository.saveAndFlush(newMapping);
+                } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                    log.warn("Data integrity violation: Mapping for '{}' already exists, ignoring duplicate save.", normalized);
+                }
+            }
             
             return Optional.of(aiCategory);
         }
